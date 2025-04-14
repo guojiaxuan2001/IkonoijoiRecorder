@@ -2,8 +2,9 @@ name: Auto Tweet Scraper
 
 on:
   schedule:
-    - cron: '0 0 */2 * *'  
-  workflow_dispatch: 
+    - cron: '0 0 */2 * *'  # 每2天 UTC时间0点运行（东京时间早上9点）
+  workflow_dispatch:       # 允许手动触发（可选）
+
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
@@ -20,17 +21,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt  
 
-      - name: Print all environment variables for debugging
-        run: env  
-
-      - name: Create credentials file
+      - name: Install Google Cloud SDK
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > capable-sled-456409-b6-8f3c678b6683.json  
-          echo "GOOGLE_APPLICATION_CREDENTIALS=capable-sled-456409-b6-8f3c678b6683.json" >> $GITHUB_ENV  
+          echo "Installing Google Cloud SDK..."
+          curl -sSL https://sdk.cloud.google.com | bash  
+          source $HOME/google-cloud-sdk/path.bash.inc
 
-      - name: Check if credentials file exists
+      - name: Authenticate using Google Cloud SDK
         run: |
-          ls -alh capable-sled-456409-b6-8f3c678b6683.json  # 确认文件是否创建
+          echo "${{ secrets.GCP_CREDENTIALS }}" | gcloud auth activate-service-account --key-file=- 
+          gcloud config set project capable-sled-456409-b6  
 
       - name: Run tweet fetcher
-        run: python main.py  
+        run: python main.py 
