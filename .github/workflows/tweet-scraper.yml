@@ -1,0 +1,29 @@
+name: INJ Event Catcher
+
+on:
+  schedule:
+    - cron: '0 0 */2 * *'  
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create credentials file
+        run: |
+          echo "${{ secrets.GCP_CREDENTIALS }}" > capable-sled-456409-b6-8f3c678b6683
+          echo "GOOGLE_APPLICATION_CREDENTIALS=capable-sled-456409-b6-8f3c678b6683" >> $GITHUB_ENV
+
+      - name: Run tweet fetcher
+        run: python main.py

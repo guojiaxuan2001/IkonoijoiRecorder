@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from following import nitterBase
-from following import accounts
+from following import account
 
 
 def fetch_latest_tweets(account):
@@ -16,4 +16,4 @@ def fetch_latest_tweets(account):
 
         tweets.append({''})
 
-        return tweets
+    return tweets
