@@ -19,18 +19,16 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt  
+        run: pip install -r requirements.txt  # 安装依赖库
 
-      - name: Install Google Cloud SDK
+      - name: Verify Secrets and Environment Variables
         run: |
-          echo "Installing Google Cloud SDK..."
-          curl -sSL https://sdk.cloud.google.com | bash  
-          source $HOME/google-cloud-sdk/path.bash.inc
+          echo "GCP_CREDENTIALS: ${GCP_CREDENTIALS}"  # 打印凭证内容（谨慎使用）
 
-      - name: Authenticate using Google Cloud SDK
+      - name: Create credentials file directly from secret
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | gcloud auth activate-service-account --key-file=- 
-          gcloud config set project capable-sled-456409-b6  
+          echo "${{ secrets.GCP_CREDENTIALS }}" > credentials.json  # 使用 GitHub Secrets 直接生成凭证文件
+          echo "GOOGLE_APPLICATION_CREDENTIALS=credentials.json" >> $GITHUB_ENV  # 设置环境变量
 
       - name: Run tweet fetcher
-        run: python main.py 
+        run: python main.py  # 运行爬虫脚本
