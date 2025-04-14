@@ -2,9 +2,8 @@ name: Auto Tweet Scraper
 
 on:
   schedule:
-    - cron: '0 0 */2 * *'  # 每2天 UTC时间0点运行（东京时间早上9点）
-  workflow_dispatch:       # 允许手动触发（可选）
-
+    - cron: '0 0 */2 * *'  
+  workflow_dispatch: 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
@@ -22,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt  # 安装依赖库
 
       - name: Print all environment variables for debugging
-        run: env  # 打印所有环境变量，检查凭证路径
+        run: env  
 
       - name: Create credentials file
         run: |
