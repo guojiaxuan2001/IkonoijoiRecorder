@@ -25,12 +25,12 @@ jobs:
 
       - name: Create credentials file
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > capable-sled-456409-b6-8f3c678b6683.json  # 创建凭证文件
-          echo "GOOGLE_APPLICATION_CREDENTIALS=capable-sled-456409-b6-8f3c678b6683.json" >> $GITHUB_ENV  # 设置环境变量
+          echo "${{ secrets.GCP_CREDENTIALS }}" > capable-sled-456409-b6-a47927834130.json  # 创建凭证文件
+          echo "GOOGLE_APPLICATION_CREDENTIALS=capable-sled-456409-b6-a47927834130.json" >> $GITHUB_ENV  # 设置环境变量
 
       - name: Check if credentials file exists
         run: |
-          ls -alh capable-sled-456409-b6-8f3c678b6683.json  # 确认文件是否创建
+          ls -alh capable-sled-456409-b6-a47927834130.json  # 确认文件是否创建
 
       - name: Run tweet fetcher
         run: python main.py  # 运行爬虫脚本
