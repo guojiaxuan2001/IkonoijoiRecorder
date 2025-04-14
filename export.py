@@ -7,8 +7,8 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name("capable-sled-456409-b6-8f3c678b6683.json", scope)
 client = gspread.authorize(creds)
 
-sheet = client.open("INJ").sheet1  # 或 worksheet("シート1")
-sheet.append_row(["account", "time", "text"])  # 写入一行
+sheet = client.open("Ikonoijoi").sheet1  
+sheet.append_row(["account", "time", "text"])  
