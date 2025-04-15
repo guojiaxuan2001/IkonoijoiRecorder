@@ -3,3 +3,6 @@ oauth2client
 beautifulsoup4
 requests
 schedule
+selenium
+webdriver_manager
+python-dotenv
