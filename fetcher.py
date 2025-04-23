@@ -146,7 +146,16 @@ def fetch_tweets_for_account(driver, account):
     try:
         driver.get(url)
         random_sleep(5, 8)
-        
+
+        # 检查并点击“Try again”按钮
+        try:
+            retry_button = driver.find_element(By.XPATH, '//span[text()="Try again"]/ancestor::div[@role="button"]')
+            logger.info("检测到 'Try again' 按钮，正在点击...")
+            retry_button.click()
+            random_sleep(5, 8)
+        except NoSuchElementException:
+            logger.info("未检测到 'Try again' 按钮，继续正常流程")
+
         wait = WebDriverWait(driver, 30)
         timeline = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="primaryColumn"]')))
         
@@ -155,13 +164,17 @@ def fetch_tweets_for_account(driver, account):
         last_height = driver.execute_script("return document.body.scrollHeight")
         no_new_content_count = 0
         max_no_new_content = 3
+
+        max_scroll_attempts = 6
+        scroll_attempts = 0
         
-        while no_new_content_count < max_no_new_content:
+        while no_new_content_count < max_no_new_content and scroll_attempts <= max_scroll_attempts:
             tweet_elements = driver.find_elements(By.CSS_SELECTOR, 'article[data-testid="tweet"]')
             logger.info(f"当前页面找到 {len(tweet_elements)} 条推文")
             
             for tweet in tweet_elements:
                 try:
+
                     tweet_id = tweet.get_attribute('data-testid')
                     if not tweet_id or tweet_id in processed_tweet_ids:
                         continue
@@ -193,9 +206,11 @@ def fetch_tweets_for_account(driver, account):
                 except Exception as e:
                     logger.warning(f"处理推文时出错: {e}")
                     continue
+                
             
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             random_sleep(3, 5)
+            scroll_attempts += 1
             
             new_height = driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
