@@ -2,8 +2,8 @@ This is a simple catcher for Ikonoijoi events.
 
 Would enhance the analyze efficacy with LLMs further.
 
-	•	I plan to optimize the logging system by improving SQL queries and develop a frontend for better data access.
-	•	I am planning to enhance the record management by optimizing SQL and building a frontend UI.
++ I plan to optimize the logging system by improving SQL queries and develop a frontend for better data access.
++ I am planning to enhance the record management by optimizing SQL and building a frontend UI.
 
 #Version1.1 Update Summary:#
 + Optimized the Twitter scraping logic to avoid repeated processing and infinite loops.
