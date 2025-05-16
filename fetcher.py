@@ -19,14 +19,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def random_sleep(min_seconds=1, max_seconds=3):
-    time.sleep(random.uniform(min_seconds, max_seconds))
+    base_sleep = random.uniform(min_seconds, max_seconds)
+    extra_sleep = random.uniform(0, 1) if random.random() < 0.3 else 0
+    time.sleep(base_sleep + extra_sleep)
 
 def create_driver():
     options = uc.ChromeOptions()
-    # 只保留必要的选项
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    options.add_argument('--disable-infobars')
+    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--start-maximized')
+    options.add_argument(f'--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+    
     driver = uc.Chrome(options=options)
+    driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'})
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
 def login_twitter(driver, max_retries=3):
@@ -142,94 +151,50 @@ def fetch_tweets_for_accounts(accounts):
 def fetch_tweets_for_account(driver, account):
     url = f"https://twitter.com/{account}"
     logger.info(f"正在获取账号 {account} 的推文...")
-    
     try:
         driver.get(url)
-        random_sleep(5, 8)
-
-        # 检查并点击“Try again”按钮
-        try:
-            retry_button = driver.find_element(By.XPATH, '//span[text()="Try again"]/ancestor::div[@role="button"]')
-            logger.info("检测到 'Try again' 按钮，正在点击...")
-            retry_button.click()
-            random_sleep(5, 8)
-        except NoSuchElementException:
-            logger.info("未检测到 'Try again' 按钮，继续正常流程")
-
+        random_sleep(8, 12)
         wait = WebDriverWait(driver, 30)
         timeline = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="primaryColumn"]')))
-        
-        processed_tweet_ids = set()
+        processed_tweet_texts = set()
         processed_tweets = []
         last_height = driver.execute_script("return document.body.scrollHeight")
-        no_new_content_count = 0
-        max_no_new_content = 3
-
-        max_scroll_attempts = 6
-        scroll_attempts = 0
-        
-        while no_new_content_count < max_no_new_content and scroll_attempts <= max_scroll_attempts:
+        max_scrolls = 5
+        scroll_count = 0
+        while scroll_count < max_scrolls:
+            scroll_count += 1
+            logger.info(f"第 {scroll_count}/{max_scrolls} 次滚动")
             tweet_elements = driver.find_elements(By.CSS_SELECTOR, 'article[data-testid="tweet"]')
             logger.info(f"当前页面找到 {len(tweet_elements)} 条推文")
-            
             for tweet in tweet_elements:
                 try:
-
-                    tweet_id = tweet.get_attribute('data-testid')
-                    if not tweet_id or tweet_id in processed_tweet_ids:
+                    text = tweet.text.strip()
+                    if not text or text in processed_tweet_texts:
                         continue
-                        
-                    processed_tweet_ids.add(tweet_id)
-                    
-                    try:
-                        text_elements = tweet.find_elements(By.CSS_SELECTOR, '[data-testid="tweetText"] span')
-                        text = ' '.join([elem.text for elem in text_elements if elem.text])
-                    except NoSuchElementException:
-                        text = tweet.text
-                    
-                    if not text:
-                        continue
-                    
+                    processed_tweet_texts.add(text)
+                    logger.info(f"抓到推文: {text.replace(chr(10), ' ')[:100]}...")
                     try:
                         time_element = tweet.find_element(By.CSS_SELECTOR, 'time')
                         tweet_time = time_element.get_attribute('datetime')
                     except NoSuchElementException:
                         tweet_time = datetime.now().isoformat()
-                    
                     processed_tweets.append({
                         'account': account,
                         'time': tweet_time,
                         'text': text
                     })
-                    logger.info(f"找到推文: {text[:50]}...")
-                    
                 except Exception as e:
                     logger.warning(f"处理推文时出错: {e}")
                     continue
-                
-            
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             random_sleep(3, 5)
-            scroll_attempts += 1
-            
             new_height = driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
-                no_new_content_count += 1
-                logger.info(f"没有新内容加载 (第 {no_new_content_count} 次)")
-                if no_new_content_count < max_no_new_content:
-                    random_sleep(2, 3)
-                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                    random_sleep(3, 5)
-                    new_height = driver.execute_script("return document.body.scrollHeight")
-            else:
-                no_new_content_count = 0
-                logger.info("发现新内容，继续滚动")
-            
+                logger.info("没有新内容加载，提前结束滚动")
+                break
             last_height = new_height
-        
         logger.info(f"成功获取到 {len(processed_tweets)} 条推文 (来自 {account})")
         return processed_tweets
-        
     except Exception as e:
         logger.error(f"获取推文时出错: {e}")
         return []

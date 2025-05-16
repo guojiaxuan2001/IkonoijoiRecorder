@@ -1,9 +1,8 @@
-gspread
-oauth2client
-beautifulsoup4
 requests
-schedule
-selenium
-webdriver_manager
+beautifulsoup4
 python-dotenv
-undetected-chromedriver
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+schedule
+sqlalchemy

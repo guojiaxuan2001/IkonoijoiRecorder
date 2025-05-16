@@ -18,6 +18,27 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
+def test_google_sheet():
+    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    logger.info(f"[TEST] Credentials path: {cred_path}")
+    if not cred_path or not os.path.exists(cred_path):
+        logger.error("[TEST] Google credentials file not found!")
+        return False
+    try:
+        creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
+        client = gspread.authorize(creds)
+        logger.info(f"[TEST] client_email: {creds.service_account_email}")
+        # 创建测试表格
+        sh = client.create('TestSheet')
+        sh.share(creds.service_account_email, perm_type='user', role='writer')
+        worksheet = sh.get_worksheet(0)
+        worksheet.append_row(['测试', '写入', '成功', datetime.now().isoformat()])
+        logger.info("[TEST] 成功写入TestSheet!")
+        return True
+    except Exception as e:
+        logger.error(f"[TEST] Google Sheet写入失败: {e}")
+        return False
+
 def save_to_csv(tweets):
     try:
         cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -98,3 +119,6 @@ def save_to_csv(tweets):
     except Exception as e:
         logger.error(f"Error exporting to Google Sheets: {str(e)}")
         return False
+
+if __name__ == "__main__":
+    test_google_sheet()
